@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f5f8f8" />
+  <title>Monitor Cardíaco ESP32 · Projeto 17</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/script.js" defer></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>Monitor Cardíaco ESP32</h1>
+        <p class="eyebrow">Projeto 17 · PUC / CNPEM · PUC-ECG-01</p>
+      </div>
+      <div class="actions">
+        <button id="downloadBtn" class="btn" type="button">↓ Salvar dados</button>
+        <button id="exportBtn" class="btn" type="button">⇩ Exportar CSV</button>
+      </div>
+    </header>
+
+    <div class="badges" aria-label="Condições do monitoramento">
+      <span class="badge" id="connection"><span class="dot"></span>Modo demonstração</span>
+      <span class="badge neutral" id="battery">Bateria: não disponível</span>
+      <span class="badge neutral" id="wifi">Wi-Fi: não conectado à placa</span>
+    </div>
+
+    <div class="notice" role="status">ⓘ <span id="noticeText"><strong>Modo demonstrativo</strong> · dados ilustrativos. Resultados exploratórios, sem validação clínica e sem uso diagnóstico.</span></div>
+
+    <section class="metrics" aria-label="Indicadores">
+      <article class="card metric"><div class="cardline"><h2>Sinal</h2><span id="qualityTag" class="tag">Simulado</span></div><strong id="signalValue">Sinal: ilustrativo</strong><small id="signalDetail">Eletrodos: não conectados à demonstração</small></article>
+      <article class="card metric"><div class="cardline"><h2>Frequência cardíaca</h2><span class="tag" id="hrTag">Simulada</span></div><div class="number"><strong id="heartRate">72</strong><span>bpm</span></div><small id="hrDetail">Valor ilustrativo</small></article>
+    </section>
+
+    <section class="card chart-card">
+      <div class="cardline"><h2>Sinal ECG em tempo real</h2><span class="tag" id="chartTag">Ilustrativo</span></div>
+      <div class="plot"><canvas id="ecgCanvas" role="img" aria-label="Representação gráfica de um ECG simulado"></canvas></div>
+      <div class="mini-metrics">
+        <div><small>Janela</small><strong>6,0 s</strong></div>
+        <div><small>Dispositivo</small><strong id="deviceName">ESP32 + AD8232 + ADS1115</strong></div>
+        <div><small>Plataforma</small><strong>Web</strong></div>
+      </div>
+      <p class="caption">O traçado nesta versão é gerado pelo navegador, não pelo sensor.</p>
+    </section>
+
+    <section class="card hrv-card">
+      <div class="cardline"><h2>Variabilidade cardíaca (HRV)</h2><small id="hrvWindow">Janela de 60 s</small></div>
+      <div class="mini-metrics hrv-grid">
+        <div><small>RMSSD</small><strong id="rmssd">—</strong><span class="subnote">Não calculado</span></div>
+        <div><small>SDNN</small><strong id="sdnn">—</strong><span class="subnote">Não calculado</span></div>
+        <div><small>FC média</small><strong id="averageHr">72 bpm</strong><span class="subnote">Ilustrativa</span></div>
+      </div>
+    </section>
+
+    <section class="card history-card">
+      <div class="cardline"><h2>Histórico da sessão</h2><small>Últimos instantes (simulação)</small></div>
+      <div class="plot plot-history"><canvas id="historyCanvas" role="img" aria-label="Histórico ilustrativo do sinal cardíaco"></canvas></div>
+      <div class="axis"><span>−6 s</span><span>−4 s</span><span>−2 s</span><span>Agora</span></div>
+    </section>
+
+    <footer>Projeto acadêmico demonstrativo · Não utilizar para diagnóstico ou monitoramento clínico.</footer>
+  </main>
+</body>
+</html>
