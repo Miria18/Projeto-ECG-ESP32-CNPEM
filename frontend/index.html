@@ -1,66 +1,130 @@
+
 <!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f5f8f8" />
-  <title>Monitor Cardíaco ESP32 · Projeto 17</title>
+  <title>Monitor Cardíaco</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/product-adjustments.css" />
   <script src="js/script.js" defer></script>
 </head>
 <body>
   <main class="app">
     <header class="topbar">
       <div>
-        <h1>Monitor Cardíaco ESP32</h1>
-        <p class="eyebrow">Projeto 17 · PUC / CNPEM · PUC-ECG-01</p>
+        <h1>Monitor Cardíaco</h1>
+        <p class="eyebrow">PUC / CNPEM · PUC-ECG-01</p>
       </div>
       <div class="actions">
-        <button id="downloadBtn" class="btn" type="button">↓ Salvar dados</button>
-        <button id="exportBtn" class="btn" type="button">⇩ Exportar CSV</button>
+        <button id="exportBtn" class="btn" type="button" disabled>⇩ Exportar CSV</button>
       </div>
     </header>
 
     <div class="badges" aria-label="Condições do monitoramento">
-      <span class="badge" id="connection"><span class="dot"></span>Modo demonstração</span>
-      <span class="badge neutral" id="battery">Bateria: não disponível</span>
-      <span class="badge neutral" id="wifi">Wi-Fi: não conectado à placa</span>
+      <span class="badge state-bad" id="connection">● Sem conexão</span>
+      <span class="badge state-bad" id="wifi">Wi-Fi: sem comunicação</span>
+      <span class="badge neutral" id="battery">Bateria: não medida</span>
     </div>
 
-    <div class="notice" role="status">ⓘ <span id="noticeText"><strong>Modo demonstrativo</strong> · dados ilustrativos. Resultados exploratórios, sem validação clínica e sem uso diagnóstico.</span></div>
+    
+    <section class="connection-panel" aria-label="Endereço do ESP32">
+      <label for="espHost">Endereço do ESP32</label>
+      <div class="connection-form">
+        <input
+          id="espHost"
+          type="text"
+          value="192.168.4.1"
+          aria-label="Endereço do ESP32"
+          readonly
+        />
+      </div>
+    </section>
+
 
     <section class="metrics" aria-label="Indicadores">
-      <article class="card metric"><div class="cardline"><h2>Sinal</h2><span id="qualityTag" class="tag">Simulado</span></div><strong id="signalValue">Sinal: ilustrativo</strong><small id="signalDetail">Eletrodos: não conectados à demonstração</small></article>
-      <article class="card metric"><div class="cardline"><h2>Frequência cardíaca</h2><span class="tag" id="hrTag">Simulada</span></div><div class="number"><strong id="heartRate">72</strong><span>bpm</span></div><small id="hrDetail">Valor ilustrativo</small></article>
+      <article class="card metric">
+        <div class="cardline">
+          <h2>Sinal</h2>
+          <span id="qualityTag" class="tag state-bad">Sem conexão</span>
+        </div>
+        <strong id="signalValue">Sem leitura</strong>
+        <small id="signalDetail">Aguardando ESP32</small>
+      </article>
+
+      <article class="card metric">
+        <div class="cardline">
+          <h2>Frequência cardíaca</h2>
+          <span class="tag state-bad" id="hrTag">Não calculada</span>
+        </div>
+        <div class="number">
+          <strong id="heartRate">—</strong>
+          <span>bpm</span>
+        </div>
+        <small id="hrDetail">Aguardando sinal válido para calcular</small>
+      </article>
     </section>
 
     <section class="card chart-card">
-      <div class="cardline"><h2>Sinal ECG em tempo real</h2><span class="tag" id="chartTag">Ilustrativo</span></div>
-      <div class="plot"><canvas id="ecgCanvas" role="img" aria-label="Representação gráfica de um ECG simulado"></canvas></div>
-      <div class="mini-metrics">
-        <div><small>Janela</small><strong>6,0 s</strong></div>
-        <div><small>Dispositivo</small><strong id="deviceName">ESP32 + AD8232 + ADS1115</strong></div>
-        <div><small>Plataforma</small><strong>Web</strong></div>
+      <div class="cardline">
+        <h2>Sinal ECG em tempo real</h2>
+        <div class="chart-badges">
+          <span id="recordIndicator" class="record-indicator" hidden aria-live="polite">
+            <span class="rec-dot"></span> REC
+          </span>
+          <span class="tag state-bad" id="chartTag">Sem sinal válido</span>
+        </div>
       </div>
-      <p class="caption">O traçado nesta versão é gerado pelo navegador, não pelo sensor.</p>
+
+      <div class="plot">
+        <canvas id="ecgCanvas" role="img" aria-label="Gráfico de sinais reais de ECG recebidos do ESP32"></canvas>
+      </div>
+
+      <div class="axis" aria-hidden="true">
+        <span>−6 s</span>
+        <span>−4 s</span>
+        <span>−2 s</span>
+        <span>Agora</span>
+      </div>
+
+      <div class="live-controls">
+        <button class="btn record-button" id="recordBtn" type="button" disabled>● Iniciar gravação</button>
+        <span id="sampleStatus" class="sample-status">Amostragem: — amostras/s</span>
+      </div>
+
+      <p class="caption">
+        <span id="chartDescription">Leitura da tensão de saída do AD8232, recebida do ESP32. Exibição experimental, sem validação clínica.</span>
+      </p>
     </section>
 
     <section class="card hrv-card">
-      <div class="cardline"><h2>Variabilidade cardíaca (HRV)</h2><small id="hrvWindow">Janela de 60 s</small></div>
+      <div class="cardline">
+        <h2>Variabilidade cardíaca (HRV)</h2>
+        <small id="hrvWindow">Janela de 60 s</small>
+      </div>
       <div class="mini-metrics hrv-grid">
-        <div><small>RMSSD</small><strong id="rmssd">—</strong><span class="subnote">Não calculado</span></div>
-        <div><small>SDNN</small><strong id="sdnn">—</strong><span class="subnote">Não calculado</span></div>
-        <div><small>FC média</small><strong id="averageHr">72 bpm</strong><span class="subnote">Ilustrativa</span></div>
+        <div>
+          <small>RMSSD</small>
+          <strong id="rmssd">—</strong>
+          <span class="subnote" id="rmssdNote">Não calculado</span>
+        </div>
+        <div>
+          <small>SDNN</small>
+          <strong id="sdnn">—</strong>
+          <span class="subnote" id="sdnnNote">Não calculado</span>
+        </div>
+        <div>
+          <small>FC média</small>
+          <strong id="averageHr">—</strong>
+          <span class="subnote" id="averageHrNote">Não calculada</span>
+        </div>
       </div>
     </section>
 
-    <section class="card history-card">
-      <div class="cardline"><h2>Histórico da sessão</h2><small>Últimos instantes (simulação)</small></div>
-      <div class="plot plot-history"><canvas id="historyCanvas" role="img" aria-label="Histórico ilustrativo do sinal cardíaco"></canvas></div>
-      <div class="axis"><span>−6 s</span><span>−4 s</span><span>−2 s</span><span>Agora</span></div>
-    </section>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-    <footer>Projeto acadêmico demonstrativo · Não utilizar para diagnóstico ou monitoramento clínico.</footer>
+    <footer>Projeto acadêmico experimental · Não utilizar para diagnóstico ou monitoramento clínico.</footer>
   </main>
 </body>
 </html>
