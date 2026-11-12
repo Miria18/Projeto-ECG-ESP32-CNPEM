@@ -385,13 +385,16 @@ async function realTick() {
 
       leadState = lo;
 
+      
       const p = {
-        n:data.s+i,
-        t:(data.s+i)/fs,
-        adc,
-        v:adc*ADC_VOLTS_PER_COUNT,
-        lo
+        n: data.s + i,
+        t: (data.s + i) / fs,
+        fs: fs,
+        adc: adc,
+        v: adc * ADC_VOLTS_PER_COUNT,
+        lo: lo
       };
+
 
       recordPoint(p);
       processBeat(p);
@@ -468,36 +471,46 @@ function connect() {
   realTick();
 }
 
+
+  
 function exportCsv() {
   if (!captured.length) {
     notify('Ainda não existem amostras gravadas para exportar.');
     return;
   }
 
-  const lines = ['origem;indice;tempo_s;adc_bruto;tensao_saida_V;lo_mais;lo_menos'];
+  const lines = [
+    'tempo_s;amostragem_hz;sinal_y_V'
+  ];
 
-  captured.forEach(p => lines.push([
-    'REAL',
-    p.n,
-    p.t.toFixed(4),
-    p.adc,
-    p.v.toFixed(6),
-    p.lo&1,
-    (p.lo>>1)&1
-  ].join(';')));
+  const tempoInicial = captured[0].t;
 
-  const blob = new Blob(['\ufeff'+lines.join('\r\n')], {
-    type:'text/csv;charset=utf-8'
+  captured.forEach(p => {
+    const tempo = p.t - tempoInicial;
+    const amostragem = p.fs ?? sampleRate;
+    const sinalY = p.v;
+
+    lines.push([
+      tempo.toFixed(4),
+      Number(amostragem).toFixed(1),
+      sinalY.toFixed(6)
+    ].join(';'));
   });
+
+  const blob = new Blob(
+    ['\ufeff' + lines.join('\r\n')],
+    { type: 'text/csv;charset=utf-8' }
+  );
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
 
   const date = new Date();
+
   const stamp = [
     date.getFullYear(),
-    String(date.getMonth()+1).padStart(2,'0'),
-    String(date.getDate()).padStart(2,'0')
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
   ].join('-');
 
   a.href = url;
@@ -507,7 +520,8 @@ function exportCsv() {
   a.click();
   a.remove();
 
-  setTimeout(() => URL.revokeObjectURL(url),1000);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
   notify('Arquivo CSV exportado com sucesso.');
 }
 
